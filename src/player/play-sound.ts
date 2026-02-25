@@ -1,0 +1,142 @@
+#!/usr/bin/env node
+import { spawn } from "node:child_process";
+import fs from "node:fs/promises";
+import path from "node:path";
+import type { HookEventName } from "../lib/types.js";
+import { readManifest, resolveSelection, resolveSoundPath } from "../lib/manifest.js";
+import {
+  isRaceOption,
+  pickPoolFile,
+  resolveRaceForEvent,
+  type PlayerState
+} from "../lib/player-logic.js";
+
+function parseFlags(argv: string[]): Record<string, string> {
+  const flags: Record<string, string> = {};
+  for (let i = 0; i < argv.length; i += 1) {
+    const token = argv[i];
+    if (!token.startsWith("--")) {
+      continue;
+    }
+    const key = token.slice(2);
+    const value = argv[i + 1];
+    if (value && !value.startsWith("--")) {
+      flags[key] = value;
+      i += 1;
+    }
+  }
+  return flags;
+}
+
+function run(command: string, args: string[]): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, { stdio: "ignore" });
+    child.on("error", reject);
+    child.on("exit", (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`${command} exited with code ${code}`));
+      }
+    });
+  });
+}
+
+async function loadState(stateFilePath: string): Promise<PlayerState> {
+  try {
+    const raw = await fs.readFile(stateFilePath, "utf8");
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return {};
+    }
+    return parsed as PlayerState;
+  } catch (error) {
+    const nodeError = error as NodeJS.ErrnoException;
+    if (nodeError.code === "ENOENT") {
+      return {};
+    }
+    return {};
+  }
+}
+
+async function saveState(stateFilePath: string, state: PlayerState): Promise<void> {
+  await fs.mkdir(path.dirname(stateFilePath), { recursive: true });
+  await fs.writeFile(stateFilePath, `${JSON.stringify(state, null, 2)}\n`, "utf8");
+}
+
+async function playFile(soundPath: string): Promise<void> {
+  if (process.platform === "darwin") {
+    await run("afplay", [soundPath]);
+    return;
+  }
+
+  if (process.platform === "linux") {
+    try {
+      await run("aplay", [soundPath]);
+    } catch {
+      await run("paplay", [soundPath]);
+    }
+    return;
+  }
+
+  if (process.platform === "win32") {
+    const escapedPath = soundPath.replace(/'/g, "''");
+    const script = [
+      "Add-Type -AssemblyName System.Media;",
+      `$player = New-Object System.Media.SoundPlayer('${escapedPath}');`,
+      "$player.PlaySync();"
+    ].join(" ");
+    await run("powershell", ["-NoProfile", "-NonInteractive", "-Command", script]);
+    return;
+  }
+
+  throw new Error(`Unsupported platform: ${process.platform}`);
+}
+
+async function main(): Promise<void> {
+  const flags = parseFlags(process.argv.slice(2));
+  const event = flags.event as HookEventName | undefined;
+  const manifestPath = flags.manifest;
+  const stateFilePath = flags["state-file"];
+  const soundsDir = flags["sounds-dir"];
+  const raceFlag = flags.race;
+
+  if (!event || !manifestPath || !isRaceOption(raceFlag)) {
+    process.exitCode = 1;
+    return;
+  }
+
+  const state = stateFilePath ? await loadState(stateFilePath) : {};
+  const raceResult = resolveRaceForEvent({
+    requestedRace: raceFlag,
+    event,
+    state
+  });
+  const resolvedRace = raceResult.race;
+  let stateChanged = raceResult.stateChanged;
+
+  const manifest = await readManifest(manifestPath);
+  const selection = resolveSelection(manifest, resolvedRace, event);
+  let fileName: string;
+  if (selection.type === "single") {
+    fileName = selection.file;
+  } else {
+    const key = `${resolvedRace}:${event}`;
+    const lastPlayed = state.lastPoolByKey?.[key];
+    fileName = pickPoolFile(selection.files, lastPlayed);
+    state.lastPoolByKey = state.lastPoolByKey ?? {};
+    state.lastPoolByKey[key] = fileName;
+    stateChanged = true;
+  }
+
+  const soundPath = resolveSoundPath(manifestPath, manifest, fileName, soundsDir);
+  if (stateFilePath && stateChanged) {
+    await saveState(stateFilePath, state);
+  }
+
+  await playFile(soundPath);
+}
+
+main().catch(() => {
+  process.exitCode = 1;
+});

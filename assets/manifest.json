@@ -1,0 +1,103 @@
+{
+  "version": 2,
+  "sourceRoot": "../curated-sounds",
+  "random": {
+    "strategy": "session-sticky"
+  },
+  "races": {
+    "protoss": {
+      "SessionStart": {
+        "type": "single",
+        "file": "pprRdy00.wav"
+      },
+      "Stop": {
+        "type": "single",
+        "file": "PAdUpd06.wav"
+      },
+      "Notification": {
+        "type": "single",
+        "file": "PAdErr00.wav"
+      },
+      "PreToolUse": {
+        "type": "single",
+        "file": "pzeRdy00.wav"
+      },
+      "PostToolUse": {
+        "type": "single",
+        "file": "PAdUpd02.wav"
+      },
+      "UserPromptSubmit": {
+        "type": "pool",
+        "files": [
+          "pprYes00.wav",
+          "pprYes01.wav",
+          "pprYes02.wav",
+          "pprYes03.wav"
+        ]
+      }
+    },
+    "terran": {
+      "SessionStart": {
+        "type": "single",
+        "file": "TSCRdy00.wav"
+      },
+      "Stop": {
+        "type": "single",
+        "file": "tadUPD06.wav"
+      },
+      "Notification": {
+        "type": "single",
+        "file": "tadErr00.wav"
+      },
+      "PreToolUse": {
+        "type": "single",
+        "file": "TMaRdy00.wav"
+      },
+      "PostToolUse": {
+        "type": "single",
+        "file": "tadUpd02.wav"
+      },
+      "UserPromptSubmit": {
+        "type": "pool",
+        "files": [
+          "TSCYes00.wav",
+          "TSCYes01.wav",
+          "TSCYes02.wav",
+          "TSCYes03.wav"
+        ]
+      }
+    },
+    "zerg": {
+      "SessionStart": {
+        "type": "single",
+        "file": "zdrRdy00.wav"
+      },
+      "Stop": {
+        "type": "single",
+        "file": "ZAdUpd02.wav"
+      },
+      "Notification": {
+        "type": "single",
+        "file": "ZAdErr00.wav"
+      },
+      "PreToolUse": {
+        "type": "single",
+        "file": "ZZeRdy00.wav"
+      },
+      "PostToolUse": {
+        "type": "single",
+        "file": "ZAdUpd02.wav"
+      },
+      "UserPromptSubmit": {
+        "type": "pool",
+        "files": [
+          "zdrYes00.wav",
+          "zdrYes01.wav",
+          "zdrYes02.wav",
+          "zdrYes03.wav",
+          "zdrYes04.wav"
+        ]
+      }
+    }
+  }
+}

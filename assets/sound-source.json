@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "provider": "github-raw",
+  "owner": "w00ing",
+  "repo": "claudecraft",
+  "ref": "main",
+  "subdir": "curated-sounds"
+}
