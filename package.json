@@ -1,5 +1,5 @@
 {
-  "name": "claudecraft",
+  "name": "@w00ing/claudecraft",
   "version": "0.1.0",
   "description": "CLI for installing StarCraft sounds into Claude Code hooks",
   "type": "module",
@@ -15,7 +15,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "bun test"
+    "test": "bun test",
+    "prepublishOnly": "bun run build"
   },
   "keywords": [
     "claude-code",
@@ -27,6 +28,12 @@
   "license": "UNLICENSED",
   "engines": {
     "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^7.8.6"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",

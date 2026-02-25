@@ -3,6 +3,7 @@ import { runDoctor } from "./commands/doctor.js";
 import { runInstall } from "./commands/install.js";
 import { runUninstall } from "./commands/uninstall.js";
 import { asBoolean, asString, parseArgs } from "./lib/args.js";
+import { selectPrompt } from "./lib/prompt.js";
 import { packageRootFromMeta } from "./lib/runtime-paths.js";
 import type { HookPreset, InstallScope, RaceOption } from "./lib/types.js";
 
@@ -45,12 +46,34 @@ function parseRace(value?: string): RaceOption | undefined {
 
 async function main(): Promise<void> {
   const parsed = parseArgs(process.argv.slice(2));
-  const command = parsed.command;
+  let command = parsed.command;
   const runtime = { packageRoot: packageRootFromMeta(import.meta.url) };
 
-  if (!command || command === "help" || asBoolean(parsed.flags, "help")) {
+  if (command === "help" || asBoolean(parsed.flags, "help")) {
     printHelp();
     return;
+  }
+
+  if (!command) {
+    if (!process.stdin.isTTY || !process.stdout.isTTY) {
+      printHelp();
+      return;
+    }
+
+    command = await selectPrompt<"install" | "uninstall" | "doctor" | "help">(
+      "What do you want to do?",
+      [
+        { label: "Install hooks", value: "install" },
+        { label: "Uninstall hooks", value: "uninstall" },
+        { label: "Run doctor", value: "doctor" },
+        { label: "Show help", value: "help" }
+      ]
+    );
+
+    if (command === "help") {
+      printHelp();
+      return;
+    }
   }
 
   switch (command) {

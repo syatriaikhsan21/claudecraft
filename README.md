@@ -1,8 +1,22 @@
 # claudecraft
 
 CLI to install StarCraft sound effects into Claude Code hooks.
+Interactive prompts are powered by Inquirer (`@inquirer/prompts`).
 
-## Quick start
+## Run with npx
+
+```bash
+npx @w00ing/claudecraft
+```
+
+Examples:
+
+```bash
+npx @w00ing/claudecraft install --scope project --preset expanded --race random
+npx @w00ing/claudecraft doctor --scope project
+```
+
+## Local development
 
 ```bash
 bun install
@@ -15,22 +29,28 @@ node dist/cli.js install --scope project --preset expanded --race random
 ### Install hooks
 
 ```bash
-node dist/cli.js install
-node dist/cli.js install --scope project --preset expanded --race protoss --yes
+npx @w00ing/claudecraft install
+npx @w00ing/claudecraft install --scope project --preset expanded --race protoss --yes
+```
+
+### Fully interactive mode
+
+```bash
+npx @w00ing/claudecraft
 ```
 
 ### Uninstall hooks
 
 ```bash
-node dist/cli.js uninstall
-node dist/cli.js uninstall --scope global --yes
+npx @w00ing/claudecraft uninstall
+npx @w00ing/claudecraft uninstall --scope global --yes
 ```
 
 ### Doctor
 
 ```bash
-node dist/cli.js doctor
-node dist/cli.js doctor --json
+npx @w00ing/claudecraft doctor
+npx @w00ing/claudecraft doctor --json
 ```
 
 ### Run tests
