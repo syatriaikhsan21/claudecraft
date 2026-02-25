@@ -64,4 +64,16 @@ describe("hooks-merge", () => {
     expect(settings.hooks?.Stop?.length).toBe(1);
     expect(settings.hooks?.SessionStart).toBeUndefined();
   });
+
+  test("applies tool matcher for PreToolUse hooks", () => {
+    const settings: ClaudeSettings = {};
+    const result = installManagedHook(
+      settings,
+      "PreToolUse",
+      "node player.js --event \"PreToolUse\" --managed-by \"claudecraft\""
+    );
+
+    expect(result.added).toBe(true);
+    expect(settings.hooks?.PreToolUse?.[0]?.matcher).toBe("Edit|Write|MultiEdit|Bash|Explore");
+  });
 });

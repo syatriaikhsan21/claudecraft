@@ -1,4 +1,4 @@
-import type { HookEventName, RaceOption } from "./types.js";
+import { MANAGED_BY, type HookEventName, type RaceOption } from "./types.js";
 
 function quote(value: string): string {
   return `"${value.replace(/"/g, '\\"')}"`;
@@ -15,12 +15,15 @@ export function buildHookCommand(input: {
   race: RaceOption;
   stateFilePath: string;
   soundsDir: string;
+  toolCooldownSec: number;
+  failureCooldownSec: number;
+  failureFilter: boolean;
 }): string {
   const scriptPath = normalizedForShell(input.playerScriptPath);
   const manifestPath = normalizedForShell(input.manifestPath);
   const stateFilePath = normalizedForShell(input.stateFilePath);
   const soundsDir = normalizedForShell(input.soundsDir);
-  return [
+  const parts = [
     "node",
     quote(scriptPath),
     "--event",
@@ -33,7 +36,17 @@ export function buildHookCommand(input: {
     quote(stateFilePath),
     "--sounds-dir",
     quote(soundsDir),
+    "--tool-cooldown",
+    quote(String(input.toolCooldownSec)),
+    "--failure-cooldown",
+    quote(String(input.failureCooldownSec)),
     "--managed-by",
-    quote("claudecraft")
-  ].join(" ");
+    quote(MANAGED_BY)
+  ];
+
+  if (!input.failureFilter) {
+    parts.push("--no-failure-filter");
+  }
+
+  return parts.join(" ");
 }

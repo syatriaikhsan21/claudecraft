@@ -6,6 +6,7 @@ export const ALL_EVENTS = [
   "Notification",
   "PreToolUse",
   "PostToolUse",
+  "PostToolUseFailure",
   "UserPromptSubmit"
 ] as const;
 
@@ -17,6 +18,7 @@ export const PRESET_EVENTS = {
     "Notification",
     "PreToolUse",
     "PostToolUse",
+    "PostToolUseFailure",
     "UserPromptSubmit"
   ]
 } as const;
@@ -25,8 +27,9 @@ export const RACES = ["protoss", "terran", "zerg", "random"] as const;
 export const FIXED_RACES = ["protoss", "terran", "zerg"] as const;
 
 export const EVENT_MATCHERS: Partial<Record<HookEventName, string>> = {
-  PreToolUse: "Edit|Write|MultiEdit|Bash",
-  PostToolUse: "Edit|Write|MultiEdit|Bash"
+  PreToolUse: "Edit|Write|MultiEdit|Bash|Explore",
+  PostToolUse: "Edit|Write|MultiEdit|Bash|Explore",
+  PostToolUseFailure: "Bash"
 };
 
 export type HookEventName = (typeof ALL_EVENTS)[number];
@@ -81,6 +84,9 @@ export interface ClaudecraftSettingsMetadata {
   manifestVersion: number;
   stateFile: string;
   soundsDir: string;
+  toolCooldownSec: number;
+  failureCooldownSec: number;
+  failureFilter: boolean;
   installedAt: string;
 }
 
@@ -93,6 +99,22 @@ export interface InstallOptions {
   projectDir?: string;
   yes?: boolean;
   verbose?: boolean;
+  toolCooldownSec?: number;
+  failureCooldownSec?: number;
+  failureFilter?: boolean;
+}
+
+export interface SwitchOptions {
+  scope?: InstallScope;
+  race?: RaceOption;
+  soundsDir?: string;
+  configPath?: string;
+  projectDir?: string;
+  yes?: boolean;
+  verbose?: boolean;
+  toolCooldownSec?: number;
+  failureCooldownSec?: number;
+  failureFilter?: boolean;
 }
 
 export interface UninstallOptions {

@@ -8,6 +8,7 @@ import {
 } from "../lib/claude-config.js";
 import { uninstallManagedHooks } from "../lib/hooks-merge.js";
 import { confirmPrompt, selectPrompt } from "../lib/prompt.js";
+import { showOutro, withSpinner } from "../lib/ui.js";
 import type { InstallScope, UninstallOptions } from "../lib/types.js";
 
 export async function runUninstall(options: UninstallOptions): Promise<void> {
@@ -32,17 +33,29 @@ export async function runUninstall(options: UninstallOptions): Promise<void> {
     }
   }
 
-  const settings = await readSettings(configPath);
-  const { removed } = uninstallManagedHooks(settings);
   const stateFilePath = path.join(path.dirname(configPath), "claudecraft-session.json");
-  delete settings.claudecraft;
-  await writeSettings(configPath, settings);
-  if (await pathExists(stateFilePath)) {
-    await fs.unlink(stateFilePath);
-  }
+  const { removed, removedStateFile } = await withSpinner(
+    "Removing managed hooks",
+    async () => {
+      const settings = await readSettings(configPath);
+      const { removed } = uninstallManagedHooks(settings);
+      delete settings.claudecraft;
+      await writeSettings(configPath, settings);
+      let removedStateFile = false;
+      if (await pathExists(stateFilePath)) {
+        await fs.unlink(stateFilePath);
+        removedStateFile = true;
+      }
+      return { removed, removedStateFile };
+    },
+    "Removed managed hooks"
+  );
 
   process.stdout.write(`Config: ${configPath}\n`);
   process.stdout.write(`Removed hooks: ${removed}\n`);
-  process.stdout.write(`Removed state file: ${stateFilePath}\n`);
+  process.stdout.write(
+    `Removed state file: ${removedStateFile ? stateFilePath : "(none found)"}\n`
+  );
   process.stdout.write(removed === 0 ? "No matching hooks found.\n" : "Uninstall complete.\n");
+  showOutro(removed === 0 ? "No hooks to remove" : "Uninstall complete");
 }

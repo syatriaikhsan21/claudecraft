@@ -1,32 +1,20 @@
 import path from "node:path";
-import {
-  readSettings,
-  resolveConfigPath,
-  writeSettings
-} from "../lib/claude-config.js";
-import { installManagedHook } from "../lib/hooks-merge.js";
-import { readManifest } from "../lib/manifest.js";
+import { readSettings, resolveConfigPath, writeSettings } from "../lib/claude-config.js";
+import { installManagedHook, listInstalledManagedEvents } from "../lib/hooks-merge.js";
 import { buildHookCommand } from "../lib/playback-command.js";
 import { confirmPrompt, selectPrompt } from "../lib/prompt.js";
 import { ensureSoundsAvailable } from "../lib/sounds.js";
 import { normalizeFailureCooldown, normalizeToolCooldown } from "../lib/failure-logic.js";
 import { showOutro, withSpinner } from "../lib/ui.js";
-import {
-  PRESET_EVENTS,
-  RACES,
-  type HookPreset,
-  type InstallOptions,
-  type InstallScope,
-  type RaceOption
-} from "../lib/types.js";
+import { type InstallScope, type RaceOption, type SwitchOptions } from "../lib/types.js";
 
-export async function runInstall(
-  options: InstallOptions,
+export async function runSwitch(
+  options: SwitchOptions,
   runtime: { packageRoot: string }
 ): Promise<void> {
   const race =
     options.race ??
-    (await selectPrompt<RaceOption>("Race:", [
+    (await selectPrompt<RaceOption>("Switch to race:", [
       { label: "Protoss", value: "protoss" },
       { label: "Terran", value: "terran" },
       { label: "Zerg", value: "zerg" },
@@ -35,19 +23,9 @@ export async function runInstall(
 
   const scope =
     options.scope ??
-    (await selectPrompt<InstallScope>("Install scope:", [
+    (await selectPrompt<InstallScope>("Switch scope:", [
       { label: "Project local (.claude/settings.local.json)", value: "project" },
       { label: "Global (~/.claude/settings.json)", value: "global" }
-    ]));
-
-  const preset =
-    options.preset ??
-    (await selectPrompt<HookPreset>("Hook preset:", [
-      { label: "Core (SessionStart, Stop, Notification)", value: "core" },
-      {
-        label: "Expanded (+PreToolUse, PostToolUse, UserPromptSubmit)",
-        value: "expanded"
-      }
     ]));
 
   const configPath = resolveConfigPath({
@@ -57,32 +35,38 @@ export async function runInstall(
   });
   const manifestPath = path.join(runtime.packageRoot, "assets", "manifest.json");
   const playerScriptPath = path.join(runtime.packageRoot, "dist", "player", "play-sound.js");
-  const stateFilePath = path.join(path.dirname(configPath), "claudecraft-session.json");
-  const toolCooldownSec = normalizeToolCooldown(options.toolCooldownSec);
-  const failureCooldownSec = normalizeFailureCooldown(options.failureCooldownSec);
-  const failureFilter = options.failureFilter ?? true;
 
-  if (!RACES.includes(race)) {
-    throw new Error(`Invalid race: ${race}`);
+  const settings = await readSettings(configPath);
+  const installedEvents = listInstalledManagedEvents(settings);
+  if (installedEvents.length === 0) {
+    throw new Error("No managed hooks found. Run install first.");
   }
 
+  const stateFilePath =
+    settings.claudecraft?.stateFile ??
+    path.join(path.dirname(configPath), "claudecraft-session.json");
+  const toolCooldownSec = normalizeToolCooldown(
+    options.toolCooldownSec ?? settings.claudecraft?.toolCooldownSec
+  );
+  const failureCooldownSec = normalizeFailureCooldown(
+    options.failureCooldownSec ?? settings.claudecraft?.failureCooldownSec
+  );
+  const failureFilter = options.failureFilter ?? settings.claudecraft?.failureFilter ?? true;
   const sounds = await withSpinner(
-    "Validating manifest and sounds",
-    async () => {
-      await readManifest(manifestPath);
-      return ensureSoundsAvailable({
+    "Preparing race sound pack",
+    async () =>
+      ensureSoundsAvailable({
         packageRoot: runtime.packageRoot,
         manifestPath,
-        explicitSoundsDir: options.soundsDir,
+        explicitSoundsDir: options.soundsDir ?? settings.claudecraft?.soundsDir,
         verbose: options.verbose
-      });
-    },
+      }),
     (value) => `Sounds ready (${value.downloaded} downloaded)`
   );
 
   if (!options.yes) {
     const shouldContinue = await confirmPrompt(
-      `Install ${preset} preset (${race}) hooks into ${configPath}?`
+      `Switch race to ${race} in ${configPath} for ${installedEvents.length} hooks?`
     );
     if (!shouldContinue) {
       process.stdout.write("Cancelled.\n");
@@ -90,13 +74,11 @@ export async function runInstall(
     }
   }
 
-  const settings = await readSettings(configPath);
-  const { added, updated } = await withSpinner(
-    "Installing managed hooks",
+  const updated = await withSpinner(
+    "Updating managed hooks",
     async () => {
-      let added = 0;
       let updated = 0;
-      for (const event of PRESET_EVENTS[preset]) {
+      for (const event of installedEvents) {
         const command = buildHookCommand({
           playerScriptPath,
           manifestPath,
@@ -108,17 +90,15 @@ export async function runInstall(
           failureCooldownSec,
           failureFilter
         });
+
         const result = installManagedHook(settings, event, command);
-        if (result.added) {
-          added += 1;
-        }
-        if (result.updated) {
+        if (result.updated || result.added) {
           updated += 1;
         }
       }
-      return { added, updated };
+      return updated;
     },
-    (value) => `Hooks ready (${value.added} added, ${value.updated} updated)`
+    (value) => `Updated ${value} hook${value === 1 ? "" : "s"}`
   );
 
   settings.claudecraft = {
@@ -130,7 +110,7 @@ export async function runInstall(
     toolCooldownSec,
     failureCooldownSec,
     failureFilter,
-    installedAt: new Date().toISOString()
+    installedAt: settings.claudecraft?.installedAt ?? new Date().toISOString()
   };
 
   await withSpinner("Writing Claude settings", async () => {
@@ -138,19 +118,11 @@ export async function runInstall(
   }, "Settings saved");
 
   process.stdout.write(`Config: ${configPath}\n`);
-  process.stdout.write(`Preset: ${preset}\n`);
   process.stdout.write(`Race: ${race}\n`);
-  process.stdout.write(`Sounds dir: ${sounds.soundsDir}\n`);
-  process.stdout.write(`Downloaded sounds: ${sounds.downloaded}\n`);
+  process.stdout.write(`Updated hooks: ${updated}\n`);
   process.stdout.write(`Tool cooldown: ${toolCooldownSec}s\n`);
   process.stdout.write(`Failure cooldown: ${failureCooldownSec}s\n`);
   process.stdout.write(`Failure filter: ${failureFilter ? "on" : "off"}\n`);
-  process.stdout.write(`Added hooks: ${added}\n`);
-  process.stdout.write(`Updated hooks: ${updated}\n`);
-  process.stdout.write(
-    added === 0 && updated === 0
-      ? "No changes (already installed with same settings).\n"
-      : "Install complete. Restart Claude Code session if needed.\n"
-  );
-  showOutro(added === 0 && updated === 0 ? "No changes" : "Install complete");
+  process.stdout.write("Switch complete.\n");
+  showOutro("Switch complete");
 }

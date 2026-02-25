@@ -30,6 +30,28 @@ describe("manifest", () => {
     if (userPrompt.type === "pool") {
       expect(userPrompt.files.length).toBeGreaterThan(1);
     }
+
+    for (const race of ["protoss", "terran", "zerg"] as const) {
+      const preToolUse = resolveSelection(manifest, race, "PreToolUse");
+      expect(preToolUse.type).toBe("pool");
+      if (preToolUse.type === "pool") {
+        expect(preToolUse.files.length).toBeGreaterThanOrEqual(4);
+        expect(preToolUse.files.length).toBeLessThanOrEqual(6);
+      }
+
+      const postToolUse = resolveSelection(manifest, race, "PostToolUse");
+      expect(postToolUse.type).toBe("pool");
+      if (postToolUse.type === "pool") {
+        expect(postToolUse.files.length).toBeGreaterThanOrEqual(4);
+        expect(postToolUse.files.length).toBeLessThanOrEqual(6);
+      }
+    }
+
+    const failure = resolveSelection(manifest, "terran", "PostToolUseFailure");
+    expect(failure.type).toBe("single");
+    if (failure.type === "single") {
+      expect(failure.file).toBe("tadErr02.wav");
+    }
   });
 
   test("all referenced files exist in curated-sounds", async () => {

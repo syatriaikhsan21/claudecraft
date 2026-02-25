@@ -3,6 +3,8 @@ import { FIXED_RACES, type FixedRace, type HookEventName, type RaceOption } from
 export interface PlayerState {
   selectedRace?: FixedRace;
   lastPoolByKey?: Record<string, string>;
+  lastFailureAt?: number;
+  lastToolSoundAt?: number;
 }
 
 export function isFixedRace(value: string | undefined): value is FixedRace {

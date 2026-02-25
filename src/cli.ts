@@ -1,127 +1,221 @@
 #!/usr/bin/env node
+import fs from "node:fs";
+import path from "node:path";
+import { Command } from "commander";
 import { runDoctor } from "./commands/doctor.js";
 import { runInstall } from "./commands/install.js";
+import { runSwitch } from "./commands/switch.js";
 import { runUninstall } from "./commands/uninstall.js";
-import { asBoolean, asString, parseArgs } from "./lib/args.js";
 import { selectPrompt } from "./lib/prompt.js";
 import { packageRootFromMeta } from "./lib/runtime-paths.js";
 import type { HookPreset, InstallScope, RaceOption } from "./lib/types.js";
+import { showIntro, showOutro } from "./lib/ui.js";
 
-function printHelp(): void {
-  process.stdout.write(`claudecraft
+const runtime = { packageRoot: packageRootFromMeta(import.meta.url) };
 
-Usage:
-  claudecraft install [--scope project|global] [--preset core|expanded] [--race protoss|terran|zerg|random] [--sounds-dir PATH] [--project-dir PATH] [--config-path PATH] [--yes]
-  claudecraft uninstall [--scope project|global] [--project-dir PATH] [--config-path PATH] [--yes]
-  claudecraft doctor [--scope project|global] [--project-dir PATH] [--config-path PATH] [--json]
+const program = new Command();
+program
+  .name("claudecraft")
+  .description("Install StarCraft sounds into Claude Code hooks")
+  .showHelpAfterError();
 
-Examples:
-  claudecraft install
-  claudecraft install --scope project --preset core --race protoss
-  claudecraft uninstall --scope global --yes
-  claudecraft doctor --json
-`);
-}
+program
+  .command("install")
+  .description("Install or update managed hooks")
+  .option("--scope <scope>", "project|global", parseScope)
+  .option("--preset <preset>", "core|expanded", parsePreset)
+  .option("--race <race>", "protoss|terran|zerg|random", parseRace)
+  .option("--sounds-dir <path>", "Path to curated-sounds directory")
+  .option("--tool-cooldown <seconds>", "Tool hook cooldown in seconds", parseInteger)
+  .option("--failure-cooldown <seconds>", "Failure hook cooldown in seconds", parseInteger)
+  .option("--no-failure-filter", "Disable failure noise filtering")
+  .option("--project-dir <path>", "Project directory (for project scope)")
+  .option("--config-path <path>", "Explicit Claude settings file path")
+  .option("--yes", "Skip confirmation prompts")
+  .option("--verbose", "Verbose output")
+  .action(async (opts) => {
+    await runInstall(
+      {
+        scope: opts.scope as InstallScope | undefined,
+        preset: opts.preset as HookPreset | undefined,
+        race: opts.race as RaceOption | undefined,
+        soundsDir: opts.soundsDir,
+        toolCooldownSec: opts.toolCooldown,
+        failureCooldownSec: opts.failureCooldown,
+        failureFilter: opts.failureFilter,
+        projectDir: opts.projectDir,
+        configPath: opts.configPath,
+        yes: opts.yes,
+        verbose: opts.verbose
+      },
+      runtime
+    );
+  });
 
-function parseScope(value?: string): InstallScope | undefined {
-  if (value === "project" || value === "global") {
-    return value;
-  }
-  return undefined;
-}
+program
+  .command("switch")
+  .description("Switch race and update managed hook settings without reinstall")
+  .option("--scope <scope>", "project|global", parseScope)
+  .option("--race <race>", "protoss|terran|zerg|random", parseRace)
+  .option("--sounds-dir <path>", "Path to curated-sounds directory")
+  .option("--tool-cooldown <seconds>", "Tool hook cooldown in seconds", parseInteger)
+  .option("--failure-cooldown <seconds>", "Failure hook cooldown in seconds", parseInteger)
+  .option("--no-failure-filter", "Disable failure noise filtering")
+  .option("--project-dir <path>", "Project directory (for project scope)")
+  .option("--config-path <path>", "Explicit Claude settings file path")
+  .option("--yes", "Skip confirmation prompts")
+  .option("--verbose", "Verbose output")
+  .action(async (opts) => {
+    await runSwitch(
+      {
+        scope: opts.scope as InstallScope | undefined,
+        race: opts.race as RaceOption | undefined,
+        soundsDir: opts.soundsDir,
+        toolCooldownSec: opts.toolCooldown,
+        failureCooldownSec: opts.failureCooldown,
+        failureFilter: opts.failureFilter,
+        projectDir: opts.projectDir,
+        configPath: opts.configPath,
+        yes: opts.yes,
+        verbose: opts.verbose
+      },
+      runtime
+    );
+  });
 
-function parsePreset(value?: string): HookPreset | undefined {
-  if (value === "core" || value === "expanded") {
-    return value;
-  }
-  return undefined;
-}
+program
+  .command("uninstall")
+  .description("Remove managed hooks")
+  .option("--scope <scope>", "project|global", parseScope)
+  .option("--project-dir <path>", "Project directory (for project scope)")
+  .option("--config-path <path>", "Explicit Claude settings file path")
+  .option("--yes", "Skip confirmation prompts")
+  .option("--verbose", "Verbose output")
+  .action(async (opts) => {
+    await runUninstall({
+      scope: opts.scope as InstallScope | undefined,
+      projectDir: opts.projectDir,
+      configPath: opts.configPath,
+      yes: opts.yes,
+      verbose: opts.verbose
+    });
+  });
 
-function parseRace(value?: string): RaceOption | undefined {
-  if (value === "protoss" || value === "terran" || value === "zerg" || value === "random") {
-    return value;
-  }
-  return undefined;
-}
+program
+  .command("doctor")
+  .description("Diagnose config and sound setup")
+  .option("--scope <scope>", "project|global", parseScope)
+  .option("--project-dir <path>", "Project directory (for project scope)")
+  .option("--config-path <path>", "Explicit Claude settings file path")
+  .option("--json", "Emit JSON report")
+  .option("--verbose", "Verbose output")
+  .action(async (opts) => {
+    await runDoctor(
+      {
+        scope: opts.scope as InstallScope | undefined,
+        projectDir: opts.projectDir,
+        configPath: opts.configPath,
+        json: opts.json,
+        verbose: opts.verbose
+      },
+      runtime
+    );
+  });
 
 async function main(): Promise<void> {
-  const parsed = parseArgs(process.argv.slice(2));
-  let command = parsed.command;
-  const runtime = { packageRoot: packageRootFromMeta(import.meta.url) };
-
-  if (command === "help" || asBoolean(parsed.flags, "help")) {
-    printHelp();
-    return;
-  }
-
-  if (!command) {
-    if (!process.stdin.isTTY || !process.stdout.isTTY) {
-      printHelp();
-      return;
-    }
-
-    command = await selectPrompt<"install" | "uninstall" | "doctor" | "help">(
-      "What do you want to do?",
+  if (process.argv.length <= 2 && process.stdin.isTTY && process.stdout.isTTY) {
+    showIntro(readCliTitle(runtime.packageRoot));
+    const selection = await selectPrompt<"install" | "switch" | "uninstall" | "doctor" | "help">(
+      "Choose what to set up",
       [
-        { label: "Install hooks", value: "install" },
-        { label: "Uninstall hooks", value: "uninstall" },
-        { label: "Run doctor", value: "doctor" },
-        { label: "Show help", value: "help" }
+        {
+          label: "Install StarCraft sounds",
+          value: "install",
+          hint: "Download sounds and set Claude hooks"
+        },
+        {
+          label: "Switch race",
+          value: "switch",
+          hint: "Protoss/Terran/Zerg/Random"
+        },
+        {
+          label: "Remove Claudecraft setup",
+          value: "uninstall",
+          hint: "Remove managed hooks and local session state"
+        },
+        {
+          label: "Check setup health",
+          value: "doctor",
+          hint: "Validate config, mappings, and playable sound files"
+        },
+        {
+          label: "Show command help",
+          value: "help",
+          hint: "List all commands and flags"
+        }
       ]
     );
 
-    if (command === "help") {
-      printHelp();
+    if (selection === "help") {
+      program.outputHelp();
+      showOutro("Ready");
       return;
     }
+
+    await program.parseAsync([process.argv[0], process.argv[1], selection]);
+    return;
   }
 
-  switch (command) {
-    case "install":
-      await runInstall(
-        {
-          scope: parseScope(asString(parsed.flags, "scope")),
-          preset: parsePreset(asString(parsed.flags, "preset")),
-          race: parseRace(asString(parsed.flags, "race")),
-          soundsDir: asString(parsed.flags, "sounds-dir"),
-          projectDir: asString(parsed.flags, "project-dir"),
-          configPath: asString(parsed.flags, "config-path"),
-          yes: asBoolean(parsed.flags, "yes"),
-          verbose: asBoolean(parsed.flags, "verbose")
-        },
-        runtime
-      );
-      return;
-    case "uninstall":
-      await runUninstall({
-        scope: parseScope(asString(parsed.flags, "scope")),
-        projectDir: asString(parsed.flags, "project-dir"),
-        configPath: asString(parsed.flags, "config-path"),
-        yes: asBoolean(parsed.flags, "yes"),
-        verbose: asBoolean(parsed.flags, "verbose")
-      });
-      return;
-    case "doctor":
-      await runDoctor(
-        {
-          scope: parseScope(asString(parsed.flags, "scope")),
-          projectDir: asString(parsed.flags, "project-dir"),
-          configPath: asString(parsed.flags, "config-path"),
-          json: asBoolean(parsed.flags, "json"),
-          verbose: asBoolean(parsed.flags, "verbose")
-        },
-        runtime
-      );
-      return;
-    default:
-      process.stderr.write(`Unknown command: ${command}\n\n`);
-      printHelp();
-      process.exitCode = 1;
-      return;
+  await program.parseAsync(process.argv);
+}
+
+function readCliTitle(packageRoot: string): string {
+  const fallback = "claudecraft";
+  try {
+    const packageJsonPath = path.join(packageRoot, "package.json");
+    const content = fs.readFileSync(packageJsonPath, "utf8");
+    const parsed = JSON.parse(content) as { version?: unknown };
+    if (typeof parsed.version === "string" && parsed.version.length > 0) {
+      return `${fallback} v${parsed.version}`;
+    }
+  } catch {
+    return fallback;
   }
+
+  return fallback;
 }
 
 main().catch((error) => {
   process.stderr.write(`${(error as Error).message}\n`);
+  showOutro("Command failed");
   process.exitCode = 1;
 });
+
+function parseScope(value: string): InstallScope {
+  if (value === "project" || value === "global") {
+    return value;
+  }
+  throw new Error("scope must be one of: project, global");
+}
+
+function parsePreset(value: string): HookPreset {
+  if (value === "core" || value === "expanded") {
+    return value;
+  }
+  throw new Error("preset must be one of: core, expanded");
+}
+
+function parseRace(value: string): RaceOption {
+  if (value === "protoss" || value === "terran" || value === "zerg" || value === "random") {
+    return value;
+  }
+  throw new Error("race must be one of: protoss, terran, zerg, random");
+}
+
+function parseInteger(value: string): number {
+  const parsed = Number.parseInt(value, 10);
+  if (Number.isNaN(parsed)) {
+    throw new Error("expected an integer value");
+  }
+  return parsed;
+}

@@ -19,12 +19,30 @@
         "file": "PAdErr00.wav"
       },
       "PreToolUse": {
-        "type": "single",
-        "file": "pzeRdy00.wav"
+        "type": "pool",
+        "files": [
+          "protoss/pretool/zealot-pzeRdy00.wav",
+          "protoss/pretool/dragoon-pdrRdy00.wav",
+          "protoss/pretool/templar-pteRdy00.wav",
+          "protoss/pretool/shuttle-pshRdy00.wav",
+          "protoss/pretool/scout-PScRdy00.wav",
+          "protoss/pretool/carrier-pcaRdy00.wav"
+        ]
       },
       "PostToolUse": {
+        "type": "pool",
+        "files": [
+          "protoss/posttool/probe-pprYes00.wav",
+          "protoss/posttool/zealot-PZeYes00.wav",
+          "protoss/posttool/dragoon-PDrYes00.wav",
+          "protoss/posttool/darktemplar-PDTYes00.wav",
+          "protoss/posttool/templar-pteYes00.wav",
+          "protoss/posttool/shuttle-PShYes00.wav"
+        ]
+      },
+      "PostToolUseFailure": {
         "type": "single",
-        "file": "PAdUpd02.wav"
+        "file": "PAdErr02.wav"
       },
       "UserPromptSubmit": {
         "type": "pool",
@@ -50,12 +68,30 @@
         "file": "tadErr00.wav"
       },
       "PreToolUse": {
-        "type": "single",
-        "file": "TMaRdy00.wav"
+        "type": "pool",
+        "files": [
+          "terran/pretool/marine-TMaRdy00.wav",
+          "terran/pretool/goliath-TGoRdy00.wav",
+          "terran/pretool/tank-ttardy00.wav",
+          "terran/pretool/vulture-tvurdy00.wav",
+          "terran/pretool/ghost-tghrdy00.wav",
+          "terran/pretool/battle-tbardy00.wav"
+        ]
       },
       "PostToolUse": {
+        "type": "pool",
+        "files": [
+          "terran/posttool/scv-TSCYes00.wav",
+          "terran/posttool/marine-TMaYes00.wav",
+          "terran/posttool/goliath-TGoYes00.wav",
+          "terran/posttool/tank-ttayes00.wav",
+          "terran/posttool/vulture-tvuyes00.wav",
+          "terran/posttool/ghost-tghyes00.wav"
+        ]
+      },
+      "PostToolUseFailure": {
         "type": "single",
-        "file": "tadUpd02.wav"
+        "file": "tadErr02.wav"
       },
       "UserPromptSubmit": {
         "type": "pool",
@@ -81,12 +117,30 @@
         "file": "ZAdErr00.wav"
       },
       "PreToolUse": {
-        "type": "single",
-        "file": "ZZeRdy00.wav"
+        "type": "pool",
+        "files": [
+          "zerg/pretool/zergling-ZZeRdy00.wav",
+          "zerg/pretool/hydra-zhyRdy00.wav",
+          "zerg/pretool/mutalid-zmuRdy00.wav",
+          "zerg/pretool/overlord-zovRdy00.wav",
+          "zerg/pretool/queen-zquRdy00.wav",
+          "zerg/pretool/ultra-zulRdy00.wav"
+        ]
       },
       "PostToolUse": {
+        "type": "pool",
+        "files": [
+          "zerg/posttool/drone-zdrYes00.wav",
+          "zerg/posttool/zergling-ZZeYes00.wav",
+          "zerg/posttool/hydra-zhyYes00.wav",
+          "zerg/posttool/mutalid-zmuYes00.wav",
+          "zerg/posttool/overlord-zovYes00.wav",
+          "zerg/posttool/queen-zquYes00.wav"
+        ]
+      },
+      "PostToolUseFailure": {
         "type": "single",
-        "file": "ZAdUpd02.wav"
+        "file": "ZAdErr02.wav"
       },
       "UserPromptSubmit": {
         "type": "pool",

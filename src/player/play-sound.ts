@@ -5,6 +5,13 @@ import path from "node:path";
 import type { HookEventName } from "../lib/types.js";
 import { readManifest, resolveSelection, resolveSoundPath } from "../lib/manifest.js";
 import {
+  isFailureInCooldown,
+  isToolInCooldown,
+  normalizeFailureCooldown,
+  normalizeToolCooldown,
+  shouldSuppressFailureByFilter
+} from "../lib/failure-logic.js";
+import {
   isRaceOption,
   pickPoolFile,
   resolveRaceForEvent,
@@ -23,6 +30,8 @@ function parseFlags(argv: string[]): Record<string, string> {
     if (value && !value.startsWith("--")) {
       flags[key] = value;
       i += 1;
+    } else {
+      flags[key] = "true";
     }
   }
   return flags;
@@ -100,6 +109,9 @@ async function main(): Promise<void> {
   const stateFilePath = flags["state-file"];
   const soundsDir = flags["sounds-dir"];
   const raceFlag = flags.race;
+  const toolCooldownSec = normalizeToolCooldown(parseInteger(flags["tool-cooldown"]));
+  const failureCooldownSec = normalizeFailureCooldown(parseInteger(flags["failure-cooldown"]));
+  const failureFilter = flags["no-failure-filter"] !== "true";
 
   if (!event || !manifestPath || !isRaceOption(raceFlag)) {
     process.exitCode = 1;
@@ -114,6 +126,43 @@ async function main(): Promise<void> {
   });
   const resolvedRace = raceResult.race;
   let stateChanged = raceResult.stateChanged;
+
+  if (event === "PreToolUse" || event === "PostToolUse") {
+    const nowMs = Date.now();
+    if (
+      isToolInCooldown({
+        lastToolSoundAt: state.lastToolSoundAt,
+        nowMs,
+        cooldownSec: toolCooldownSec
+      })
+    ) {
+      process.exitCode = 0;
+      return;
+    }
+    state.lastToolSoundAt = nowMs;
+    stateChanged = true;
+  }
+
+  if (event === "PostToolUseFailure") {
+    const payload = await readStdinPayload();
+    if (failureFilter && shouldSuppressFailureByFilter(payload)) {
+      process.exitCode = 0;
+      return;
+    }
+    const nowMs = Date.now();
+    if (
+      isFailureInCooldown({
+        lastFailureAt: state.lastFailureAt,
+        nowMs,
+        cooldownSec: failureCooldownSec
+      })
+    ) {
+      process.exitCode = 0;
+      return;
+    }
+    state.lastFailureAt = nowMs;
+    stateChanged = true;
+  }
 
   const manifest = await readManifest(manifestPath);
   const selection = resolveSelection(manifest, resolvedRace, event);
@@ -140,3 +189,30 @@ async function main(): Promise<void> {
 main().catch(() => {
   process.exitCode = 1;
 });
+
+async function readStdinPayload(): Promise<unknown> {
+  if (process.stdin.isTTY) {
+    return undefined;
+  }
+  let raw = "";
+  for await (const chunk of process.stdin) {
+    raw += chunk.toString();
+  }
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  try {
+    return JSON.parse(trimmed) as unknown;
+  } catch {
+    return trimmed;
+  }
+}
+
+function parseInteger(value: string | undefined): number | undefined {
+  if (!value) {
+    return undefined;
+  }
+  const parsed = Number.parseInt(value, 10);
+  return Number.isNaN(parsed) ? undefined : parsed;
+}
