@@ -3,6 +3,10 @@
 CLI to install StarCraft sound effects into Claude Code hooks.
 Interactive prompts are powered by Clack (`@clack/prompts`).
 
+## Demo
+
+[Watch demo video (MP4)](assets/claudecraft-demo-short.mp4)
+
 ## Run with npx
 
 ```bash
