@@ -5,7 +5,7 @@ Interactive prompts are powered by Clack (`@clack/prompts`).
 
 ## Demo
 
-<video src="assets/claudecraft-demo-short.mp4" controls width="900"></video>
+[![Claudecraft demo](assets/claudecraft-demo-short.gif)](assets/claudecraft-demo-short.mp4)
 
 [Download demo video (MP4)](assets/claudecraft-demo-short.mp4)
 
