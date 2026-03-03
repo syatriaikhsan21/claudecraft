@@ -139,7 +139,7 @@ async function main(): Promise<void> {
           hint: "Protoss/Terran/Zerg/Random"
         },
         {
-          label: "Remove Claudecraft setup",
+          label: "Remove ClaudeCraft setup",
           value: "uninstall",
           hint: "Remove managed hooks and local session state"
         },
@@ -170,7 +170,7 @@ async function main(): Promise<void> {
 }
 
 function readCliTitle(packageRoot: string): string {
-  const fallback = "claudecraft";
+  const fallback = "ClaudeCraft";
   try {
     const packageJsonPath = path.join(packageRoot, "package.json");
     const content = fs.readFileSync(packageJsonPath, "utf8");

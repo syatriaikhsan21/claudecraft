@@ -1,11 +1,11 @@
-# claudecraft
+# ClaudeCraft
 
 CLI to install StarCraft sound effects into Claude Code hooks.
 Interactive prompts are powered by Clack (`@clack/prompts`).
 
 ## Demo
 
-[![Claudecraft demo](assets/claudecraft-demo-short.gif)](assets/claudecraft-demo-short.mp4)
+[![ClaudeCraft demo](assets/claudecraft-demo-short.gif)](assets/claudecraft-demo-short.mp4)
 
 [Download demo video (MP4)](assets/claudecraft-demo-short.mp4)
 
@@ -93,5 +93,5 @@ bun run curate:tool-sounds
 - `all-sounds/` is source/reference; active packaged sounds are copied into `curated-sounds/`.
 - Sounds are auto-downloaded from GitHub on install when not present locally.
 - You can override with `--sounds-dir /absolute/path/to/curated-sounds`.
-- Existing non-Claudecraft hooks are preserved.
+- Existing non-ClaudeCraft hooks are preserved.
 - Managed entries are tagged for safe uninstall.

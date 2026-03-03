@@ -26,7 +26,7 @@ export async function runUninstall(options: UninstallOptions): Promise<void> {
   });
 
   if (!options.yes) {
-    const shouldContinue = await confirmPrompt(`Remove Claudecraft hooks from ${configPath}?`);
+    const shouldContinue = await confirmPrompt(`Remove ClaudeCraft hooks from ${configPath}?`);
     if (!shouldContinue) {
       process.stdout.write("Cancelled.\n");
       return;
