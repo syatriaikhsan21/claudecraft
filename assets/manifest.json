@@ -42,7 +42,7 @@
       },
       "PostToolUseFailure": {
         "type": "single",
-        "file": "PAdErr02.wav"
+        "file": "PAdErr06.wav"
       },
       "UserPromptSubmit": {
         "type": "pool",
@@ -91,7 +91,7 @@
       },
       "PostToolUseFailure": {
         "type": "single",
-        "file": "tadErr02.wav"
+        "file": "TAdErr06.wav"
       },
       "UserPromptSubmit": {
         "type": "pool",
@@ -140,7 +140,7 @@
       },
       "PostToolUseFailure": {
         "type": "single",
-        "file": "ZAdErr02.wav"
+        "file": "ZAdErr06.wav"
       },
       "UserPromptSubmit": {
         "type": "pool",

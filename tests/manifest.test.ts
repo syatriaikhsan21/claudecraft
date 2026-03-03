@@ -47,10 +47,17 @@ describe("manifest", () => {
       }
     }
 
-    const failure = resolveSelection(manifest, "terran", "PostToolUseFailure");
-    expect(failure.type).toBe("single");
-    if (failure.type === "single") {
-      expect(failure.file).toBe("tadErr02.wav");
+    const failureByRace: Record<"protoss" | "terran" | "zerg", string> = {
+      protoss: "PAdErr06.wav",
+      terran: "TAdErr06.wav",
+      zerg: "ZAdErr06.wav"
+    };
+    for (const race of ["protoss", "terran", "zerg"] as const) {
+      const failure = resolveSelection(manifest, race, "PostToolUseFailure");
+      expect(failure.type).toBe("single");
+      if (failure.type === "single") {
+        expect(failure.file).toBe(failureByRace[race]);
+      }
     }
   });
 
